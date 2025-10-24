@@ -1,3 +1,130 @@
+Control Plane Policing:
+
+Task0: prevent icmp overload:
+config t
+ip access-list extended PING
+  permit icmp any any
+!
+class-map CMPING
+  match access-group name PING
+!
+no policy-map PMPING
+policy-map PMPING
+  class CMPING
+  !limit to 8bps and drop exceeding
+  police 8000 conform-action transmit exceed-action drop
+  exit
+!
+control-plane
+ service-policy input PMPING
+ exit
+do sh policy-map control-plane
+
+
+ANOTHERactual:
+
+config t
+no access-list 100
+access-list 100 permit icmp any any
+!
+no class-map ICMP
+class-map ICMP
+ match access-group 100
+ exit
+!
+no policy-map ICMP-POLICY
+policy-map ICMP-POLICY
+ class ICMP
+  police 8000 conform-action transmit exceed-action drop
+  exit
+ exit
+ exit
+!
+control-plane
+ service-policy input ICMP-POLICY
+ DO  sh policy-map control-plane
+
+
+
+TASK1: 
+pre-config:
+config t
+ip dns server
+ip finger
+ip http server
+ip http secure-server
+
+
+config t
+!ac
+ip access-list extended TELNET
+ permit tcp any any eq 23
+ exit
+ip access-list extended SSH
+ permit tcp any any eq 22
+ exit
+ip access-list extended ICMP
+ permit icmp any any
+ exit
+!cm
+class-map match-all CMTEL
+ match access-group name TELNET
+ exit
+class-map match-all CMSSH
+ match access-group name SSH
+ exit
+class-map match-all CMICMP
+ match access-group name ICMP
+ exit
+!PM
+policy-map PMCOPP
+ !pass ALL TELNET TRAFFIC
+ class CMTEL
+  police 8000 conform-action drop exceed-action drop
+ !limit ALL SSH TRAFFIC
+ class CMSSH
+  police 500000 conform-action transmit exceed-action transmit
+ !set ping at 10pps, confrom to transmit, exceed to drop
+ class CMICMP
+  police rate 10 pps conform-action transmit exceed-action drop
+
+class class-default
+ police 12000 conform-action transmit exceed-action transmit
+ exit
+!SP
+control-plane
+ service-policy input PMCOPP
+END
+show class-map
+show policy-map
+show policy-map control-plane
+
+TASK2:
+
+User
+write a cisco configuration for COPP that will totally block http 
+traffic but allow telnet and ssh traffic using one service-policy only
+
+config t
+! Define an access control list (ACL) to match HTTP traffic
+access-list 101 deny tcp any any eq 443
+access-list 101 permit ip any any
+
+! Create a class map to match the ACL
+class-map match-all HTTPS-Traffic
+  match access-group 101
+
+! Create a policy map for CoPP
+no policy-map Control-Plane-Policing
+policy-map Control-Plane-Policing
+  class HTTPS-Traffic
+    police 80000 1500 1500 conform-action transmit exceed-action drop violate-action drop
+    exit
+! Apply the CoPP policy to the control plane
+control-plane
+ service-policy input Control-Plane-Policing
+ exit
+
 CONFIG T
 no logging console
 Int Gi 2
@@ -405,3 +532,4 @@ show glbp brief
 show standby
 
 show ip sla statistics
+
