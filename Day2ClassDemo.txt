@@ -1,3 +1,83 @@
+CONFIG T
+no logging console
+Int Gi 2
+no shut
+ip add 192.168.102.11 255.255.255.0
+!@telnet use secureCRT: telnet 192.168.108.5
+!in SEcureCRT, Paste This:
+config t
+IP ROUTE 0.0.0.0  0.0.0.0 208.8.8.2
+ip name-server 8.8.8.8 1.1.1.1
+ip domain lookup
+int gi 1
+no shut
+ip add 208.8.8.11 255.255.255.0
+int gi 3
+no shut
+ip add 192.168.103.11 255.255.255.0
+line vty 0 14
+ transport input all
+ exec-timeout 0 0
+do sh ip int brief
+
+PC1:
+config t
+line vty 0 14
+ transport input all
+ exec-timeout 0 0
+do sh ip int brief
+interface GigabitEthernet2
+ no shut
+ ip address 192.168.102.100 255.255.255.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+end
+
+TBacl:
+
+step1: set time
+conf t
+ clock timezone PHT 8
+end
+
+step2:
+conf t
+ time-range BUSINESS-HOURS
+  periodic weekdays 8:00 to 18:00
+end
+show time-range BUSINESS-HOURS
+
+
+step3:
+conf t
+ no  ip access-list extended TB-HTTP
+ ip access-list extended TB-HTTP
+  remark Permit HTTP and during business hours
+  permit tcp any any eq 80 time-range BUSINESS-HOURS
+  permit icmp any any time-range BUSINESS-HOURS
+  remark Optional: still allow DNS if you need it for tests
+  !permit udp 192.168.0.0 0.0.255.255 any eq 53
+  remark Drop everything else and log
+  deny   ip any any log
+end
+
+step4:
+conf t
+ interface GigabitEthernet1
+    no ip access-group TB-HTTP out
+ interface GigabitEthernet2
+    no ip access-group TB-HTTP out
+	ip access-group TB-HTTP in
+end
+
+
+
+clock set 01:15:00 21 Oct 2025
+clock set 09:15:00 21 Oct 2025
+show clock
+show time-range BUSINESS-HOURS
+
 ping 10.3.3.107
 https://github.com/rivancorp/devop
 
@@ -323,4 +403,5 @@ glbp 10 weighting track 1 decrement 20
 show glbp
 show glbp brief
 show standby
+
 show ip sla statistics
