@@ -1,0 +1,106 @@
+Mapserver/MapResolver:
+CoreB:
+config t
+int lo 2
+ip add 2.2.2.2 255.255.255.255
+ip ospf 1 area 0
+
+
+PeZ:
+config t
+int lo 1
+ip add 1.1.1.1 255.255.255.255
+end
+
+CoreA:
+config t
+int lo 3
+ip add 3.3.3.3 255.255.255.255
+end
+
+LISP CONFGIURATION: MAP SERVER/MAP RESOLVER.
+R2: mapserver/mapresolver: can Ping everyone:
+
+config t
+router lisp
+ipv4 map-server
+ipv4 map-resolver
+!
+lisp site siteR3
+eid-prefix 3.3.3.3/32
+authentication-key rivansite3
+!
+lisp site siteR1
+eid-prefix 1.1.1.1/32
+authentication-key rivansite1
+!
+ip lisp map-server
+ip lisp map-resolver
+!
+show lisp site summary
+show ip lisp map-cache
+show ip lisp database
+end
+
+@ETR/ITR:
+PeZ:
+config t
+router Lisp
+database-mapping 1.1.1.1/32 10.1.1.1 priority 1 weight 100
+ipv4 itr
+ipv4 itr map-resolver 2.2.2.2
+ipv4 etr
+ipv4 etr map-server 2.2.2.2 key rivansite1
+end
+
+
+CoreA:
+config t
+router Lisp
+database-mapping 3.3.3.3/32 10.1.1.6 priority 1 weight 100
+ipv4 itr
+ipv4 itr map-resolver 2.2.2.2
+ipv4 etr
+ipv4 etr map-server 2.2.2.2 key rivansite3
+end
+
+show lisp site summary
+show ip lisp map-cache
+show ip lisp database
+end
+
+PCore-B#show lisp site 
+LISP Site Registration Information
+* = Some locators are down or unreachable
+# = Some registrations are sourced by reliable transport
+
+Site Name      Last      Up     Who Last             Inst     EID Prefix
+               Register         Registered           ID       
+siteR1         00:16:40  yes#   10.1.1.1                      1.1.1.1/32
+siteR3         00:16:20  yes#   10.1.1.6                      3.3.3.3/32
+
+PCore-A#sh ip lisp map-cache 
+LISP IPv4 Mapping Cache for EID-table default (IID 0), 2 entries
+0.0.0.0/0, uptime: 00:22:10, expires: never, via static send map-request
+  Negative cache entry, action: send-map-request
+1.1.1.1/32, uptime: 00:01:09, expires: 23:58:50, via map-reply, complete
+  Locator   Uptime    State      Pri/Wgt
+  10.1.1.1  00:01:09  up           1/100
+PCore-A#
+
+PCore-A#ping 1.1.1.1 source 3.3.3.3
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 1.1.1.1, timeout is 2 seconds:
+Packet sent with a source address of 3.3.3.3 
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 1/1/1 ms
+PCore-A#show ip lisp map 
+PCore-A#show ip lisp map-cache 
+LISP IPv4 Mapping Cache for EID-table default (IID 0), 2 entries
+
+0.0.0.0/0, uptime: 00:22:47, expires: never, via static send map-request
+  Negative cache entry, action: send-map-request
+1.1.1.1/32, uptime: 00:01:45, expires: 23:58:14, via map-reply, complete
+  Locator   Uptime    State      Pri/Wgt
+  10.1.1.1  00:01:45  up           1/100
+PCore-A#
