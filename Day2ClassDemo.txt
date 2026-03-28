@@ -262,7 +262,7 @@ ExamLab1: Create a default netflow exporter using Defualt collection:
 APPS1: 
 config t
 flow exporter MyFlowExporter
- destination 192.168.108.1
+ destination 208.8.8.1
  transport udp 2055
  export-protocol netflow-v9
 end
@@ -284,7 +284,7 @@ show flow record CCNPENCOR-CUSTOM-OUT
 STEPtwo: CReate Flow Exporter:
 config t
 	flow exporter CCNP8-COLLECTOR-HOST 
-        destination 192.168.108.1
+        destination 208.8.8.1
 	export-protocol netflow-v9 
         transport UDP 2055
 	end
