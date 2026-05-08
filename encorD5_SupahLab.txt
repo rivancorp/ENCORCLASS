@@ -1061,13 +1061,13 @@ router lisp
 ipv4 map-server
 ipv4 map-resolver
 !
-lisp site siteR3
+lisp site CONVERGE
 eid-prefix 3.3.3.3/32
-authentication-key rivansite3
+authentication-key CONVERGEKEY
 !
-lisp site siteR1
+lisp site GLOBE
 eid-prefix 1.1.1.1/32
-authentication-key rivansite1
+authentication-key GLOBEKEY
 !
 ip lisp map-server
 ip lisp map-resolver
@@ -1084,7 +1084,7 @@ database-mapping 1.1.1.1/32 130.0.0.1 priority 1 weight 100
 ipv4 itr
 ipv4 itr map-resolver 2.2.2.2
 ipv4 etr
-ipv4 etr map-server 2.2.2.2 key rivansite1
+ipv4 etr map-server 2.2.2.2 key GLOBEKEY
 end
 R3:
 config t
@@ -1093,7 +1093,7 @@ database-mapping 3.3.3.3/32 140.0.0.3 priority 1 weight 100
 ipv4 itr
 ipv4 itr map-resolver 2.2.2.2
 ipv4 etr
-ipv4 etr map-server 2.2.2.2 key rivansite3
+ipv4 etr map-server 2.2.2.2 key CONVERGEKEY
 end
 
 task1: al-cm-pm-sp
